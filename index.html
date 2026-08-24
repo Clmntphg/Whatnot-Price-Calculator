@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Calculateur JP · CardsInJapan / Whatnot</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0e17">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Calc JP">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0e17;
+    --card:#141826;
+    --card-border:#232838;
+    --red:#d6402c;
+    --gold:#c9a227;
+    --text:#f2efe9;
+    --muted:#8790a3;
+    --muted-2:#5c6478;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    font-feature-settings:'tnum' 1;
+    padding-bottom:132px;
+  }
+  .wrap{max-width:520px;margin:0 auto;padding:20px 16px 24px;}
+
+  header{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+  .seal{
+    width:38px;height:38px;border-radius:50%;
+    background:var(--red);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:17px;
+    flex-shrink:0;
+  }
+  h1{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:600;margin:0;letter-spacing:.2px;}
+  header .sub{font-size:12.5px;color:var(--muted);margin-top:2px;}
+
+  nav.tabs{display:flex;gap:6px;margin-bottom:18px;background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:4px;}
+  nav.tabs button{
+    flex:1;padding:10px 0;border:none;background:transparent;color:var(--muted);
+    font-family:inherit;font-size:13.5px;font-weight:600;border-radius:10px;cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  nav.tabs button.active{background:#1d2231;color:var(--text);}
+
+  section.panel{display:none;}
+  section.panel.active{display:block;}
+
+  .card{background:var(--card);border:1px solid var(--card-border);border-radius:18px;padding:18px;margin-bottom:14px;}
+
+  .seg{display:flex;gap:8px;margin-bottom:16px;}
+  .seg button{
+    flex:1;padding:11px 6px;border-radius:12px;border:1px solid var(--card-border);
+    background:#10131e;color:var(--muted);font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer;
+  }
+  .seg button.active{background:var(--red);border-color:var(--red);color:#fff;}
+  .seg.gold button.active{background:var(--gold);border-color:var(--gold);color:#0b0e17;}
+
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.4px;}
+  label:first-of-type{margin-top:0;}
+  input,select{
+    width:100%;padding:14px;border-radius:12px;border:1px solid var(--card-border);
+    background:#0f1220;color:var(--text);font-family:'Inter',monospace;font-size:19px;font-weight:600;
+    font-feature-settings:'tnum' 1;
+  }
+  input:focus,select:focus{outline:none;border-color:var(--gold);}
+  input:disabled{opacity:.45;}
+  .hint{font-size:12px;color:var(--muted-2);margin-top:6px;line-height:1.4;}
+
+  .rows{margin-top:4px;}
+  .r{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--card-border);}
+  .r:last-child{border-bottom:none;}
+  .r .l{font-size:13px;color:var(--muted);}
+  .r .v{font-size:14.5px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right;}
+  .r .v small{display:block;color:var(--muted);font-weight:500;font-size:11.5px;margin-top:1px;}
+
+  footer.bar{
+    position:fixed;bottom:0;left:0;right:0;
+    background:linear-gradient(180deg,#141826ee,#0b0e17);
+    border-top:1px solid var(--card-border);
+    padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+    backdrop-filter:blur(8px);
+  }
+  .bar-inner{max-width:520px;margin:0 auto;}
+  .bar-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+  .bar-total{font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:700;color:var(--gold);line-height:1.2;}
+  .bar-total .jpy{font-size:16px;color:var(--muted);font-weight:600;}
+  .bar-range{font-size:12.5px;color:var(--muted);margin-top:2px;}
+
+  .badge{display:inline-block;padding:4px 10px;border-radius:99px;background:#1d2231;color:var(--muted);font-size:11.5px;font-weight:600;margin-bottom:10px;}
+
+  .hist-item{border:1px solid var(--card-border);border-radius:14px;padding:13px;margin-bottom:10px;}
+  .hist-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .hist-top .plat{font-size:12.5px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.3px;}
+  .hist-top .del{background:none;border:none;color:var(--muted-2);font-size:12px;cursor:pointer;padding:4px;}
+  .hist-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:12.5px;color:var(--muted);}
+  .hist-grid b{color:var(--text);font-weight:600;}
+  .hist-empty{color:var(--muted);font-size:13px;text-align:center;padding:20px 0;}
+
+  .stat-line{font-size:12.5px;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--card-border);}
+  .stat-line:last-child{border-bottom:none;}
+  .stat-line b{color:var(--gold);}
+
+  .add-btn{width:100%;padding:13px;border-radius:12px;border:1px dashed var(--card-border);background:transparent;color:var(--muted);font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer;margin-top:4px;}
+  .add-btn:active{background:#1d2231;}
+  .save-btn{width:100%;padding:14px;border-radius:12px;border:none;background:var(--red);color:#fff;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  h3{font-family:'Space Grotesk',sans-serif;font-size:14.5px;margin:0 0 12px;color:var(--text);}
+  .platform-note{font-size:12px;color:var(--muted-2);margin-top:-4px;margin-bottom:14px;line-height:1.4;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="seal">¥</div>
+    <div>
+      <h1>Calculateur JP</h1>
+      <div class="sub">CardsInJapan · Whatnot → France</div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button id="tabCalc" class="active">Calcul</button>
+    <button id="tabHist">Historique</button>
+    <button id="tabSet">Réglages</button>
+  </nav>
+
+  <section id="panelCalc" class="panel active">
+    <div class="card">
+      <div class="badge" id="badge">Premier achat</div>
+
+      <label>Prix de l'article (JPY)</label>
+      <input id="price" type="number" inputmode="numeric" min="0" step="1" value="16000">
+
+      <label>Livraison (JPY)</label>
+      <input id="shipping" type="number" inputmode="numeric" min="0" step="1" value="3261">
+      <div class="hint" id="shipHint">Livraison à 0 → détecté automatiquement comme achat suivant du même live.</div>
+    </div>
+
+    <div class="card">
+      <h3>Détail</h3>
+      <div class="rows">
+        <div class="r"><span class="l">Article</span><span class="v" id="rPrice">—</span></div>
+        <div class="r"><span class="l">Livraison</span><span class="v" id="rShip">—</span></div>
+        <div class="r"><span class="l">Base TVA</span><span class="v" id="rBase">—</span></div>
+        <div class="r"><span class="l" id="rVatLabel">TVA</span><span class="v" id="rVat">—</span></div>
+        <div class="r"><span class="l">Droits/taxes estimés</span><span class="v" id="rDuty">—</span></div>
+        <div class="r"><span class="l">Frais fixe colis</span><span class="v" id="rFixed">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="panelHist" class="panel">
+    <div class="card">
+      <h3>Références calculées</h3>
+      <div id="statsBox"></div>
+    </div>
+    <div class="card">
+      <h3>Commandes enregistrées</h3>
+      <div id="histList"></div>
+      <button class="add-btn" id="addHistBtn">+ Ajouter une commande réelle</button>
+    </div>
+  </section>
+
+  <section id="panelSet" class="panel">
+    <div class="card">
+      <h3>Conversion</h3>
+      <label>Taux JPY → EUR</label>
+      <input id="setRate" type="number" step="0.000001" min="0">
+      <label>TVA française</label>
+      <div class="grid2">
+        <div><label>Min.</label><input id="setVatMin" type="number" step="0.001" min="0" max="1"></div>
+        <div><label>Max.</label><input id="setVatMax" type="number" step="0.001" min="0" max="1"></div>
+      </div>
+      <div class="hint">Saisir en décimal, ex. 0.20 pour 20 %. Observée entre ~20 % et ~21 % selon les commandes.</div>
+    </div>
+
+    <div class="card">
+      <h3>CardsInJapan</h3>
+      <div class="grid2">
+        <div><label>Droits min. (1er achat)</label><input id="cijMin" type="number" step="0.001" min="0" max="1"></div>
+        <div><label>Droits max. (1er achat)</label><input id="cijMax" type="number" step="0.001" min="0" max="1"></div>
+      </div>
+      <label>Droits (achat suivant)</label>
+      <div class="grid2">
+        <div><label>Min.</label><input id="cijNextMin" type="number" step="0.001" min="0" max="1"></div>
+        <div><label>Max.</label><input id="cijNextMax" type="number" step="0.001" min="0" max="1"></div>
+      </div>
+      <label>Frais fixe / colis (EUR)</label>
+      <input id="cijFixed" type="number" step="0.01" min="0">
+    </div>
+
+    <div class="card">
+      <h3>Whatnot</h3>
+      <div class="platform-note">Whatnot affiche sa propre estimation (souvent ~3–4 % de la valeur + 1 €/colis). Ajuste ces valeurs selon ce qui est affiché en live.</div>
+      <div class="grid2">
+        <div><label>Droits min. (1er achat)</label><input id="wnMin" type="number" step="0.001" min="0" max="1"></div>
+        <div><label>Droits max. (1er achat)</label><input id="wnMax" type="number" step="0.001" min="0" max="1"></div>
+      </div>
+      <label>Droits (achat suivant)</label>
+      <div class="grid2">
+        <div><label>Min.</label><input id="wnNextMin" type="number" step="0.001" min="0" max="1"></div>
+        <div><label>Max.</label><input id="wnNextMax" type="number" step="0.001" min="0" max="1"></div>
+      </div>
+      <label>Frais fixe / colis (EUR)</label>
+      <input id="wnFixed" type="number" step="0.01" min="0">
+    </div>
+
+    <button class="save-btn" id="saveSetBtn">Enregistrer les réglages</button>
+  </section>
+</div>
+
+<footer class="bar">
+  <div class="bar-inner">
+    <div class="bar-label">Estimation centrale</div>
+    <div class="bar-total" id="barTotal">—</div>
+    <div class="bar-range" id="barRange">—</div>
+  </div>
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const DEFAULT_SETTINGS = {
+  rate: 0.00544,
+  vatMin: 0.20,
+  vatMax: 0.213,
+  platforms: {
+    cardsinjapan: { firstMin: 0.06, firstMax: 0.10, nextMin: 0.02, nextMax: 0.065, fixedFee: 0 },
+    whatnot:      { firstMin: 0.03, firstMax: 0.04, nextMin: 0.02, nextMax: 0.065, fixedFee: 1 }
+  }
+};
+
+const DEFAULT_HISTORY = [
+  { id:'h1', platform:'cardsinjapan', mode:'first', price:3100,  shipping:6404, vat:1900, duty:948,  total:12352, date:'' },
+  { id:'h2', platform:'cardsinjapan', mode:'first', price:16000, shipping:3261, vat:3852, duty:1148, total:24261, date:'' },
+  { id:'h3', platform:'cardsinjapan', mode:'next',  price:8600,  shipping:0,    vat:1720, duty:172,  total:10492, date:'' },
+  { id:'h4', platform:'cardsinjapan', mode:'next',  price:3800,  shipping:0,    vat:760,  duty:76,   total:4636,  date:'' },
+  { id:'h5', platform:'cardsinjapan', mode:'first', price:15700, shipping:3954, vat:3930, duty:1163, total:24747, date:'' },
+  { id:'h6', platform:'cardsinjapan', mode:'next',  price:28000, shipping:0,    vat:5858, duty:1445, total:35303, date:'' },
+  { id:'h7', platform:'cardsinjapan', mode:'next',  price:27500, shipping:0,    vat:5812, duty:1742, total:35054, date:'' }
+];
+
+let settings = structuredClone(DEFAULT_SETTINGS);
+let history = structuredClone(DEFAULT_HISTORY);
+let mode = 'first';
+const platform = 'cardsinjapan';
+let saveTimer = null;
+
+function loadState(){
+  try{
+    const s = localStorage.getItem('cjp_settings');
+    if(s) settings = JSON.parse(s);
+  }catch(e){}
+  try{
+    const h = localStorage.getItem('cjp_history');
+    if(h) history = JSON.parse(h);
+  }catch(e){}
+  fillSettingsForm();
+  renderHistory();
+  calculate();
+}
+
+function persist(key, value){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try{ localStorage.setItem('cjp_' + key, JSON.stringify(value)); }
+    catch(e){ console.error('Storage error', e); }
+  }, 250);
+}
+
+function fmtJPY(v){ return new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0}).format(v) + ' ¥'; }
+function fmtEUR(v){ return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(v); }
+
+function setTab(tab){
+  ['Calc','Hist','Set'].forEach(t=>{
+    $('tab'+t).classList.toggle('active', t.toLowerCase()===tab);
+    $('panel'+t).classList.toggle('active', t.toLowerCase()===tab);
+  });
+  if(tab==='hist') renderStats();
+}
+
+function updateModeFromShipping(){
+  const shipVal = Number($('shipping').value) || 0;
+  mode = shipVal === 0 ? 'next' : 'first';
+  $('badge').textContent = mode === 'first' ? 'Premier achat' : 'Achat suivant du même live';
+}
+
+function calculate(){
+  updateModeFromShipping();
+  const price = Number($('price').value) || 0;
+  const shipping = mode==='next' ? 0 : (Number($('shipping').value) || 0);
+  const rate = settings.rate;
+  const cfg = settings.platforms[platform];
+
+  const base = price + shipping;
+  const vatLow = base * settings.vatMin;
+  const vatHigh = base * settings.vatMax;
+  const vatCentral = (vatLow + vatHigh) / 2;
+
+  let duty, lowDuty, highDuty;
+  if(mode==='next'){
+    lowDuty = price * cfg.nextMin;
+    highDuty = price * cfg.nextMax;
+    duty = (lowDuty + highDuty) / 2;
+  } else {
+    lowDuty = base * cfg.firstMin;
+    highDuty = base * cfg.firstMax;
+    duty = (lowDuty + highDuty) / 2;
+  }
+
+  const fixedFeeEUR = cfg.fixedFee || 0;
+  const totalJPY = price + shipping + vatCentral + duty;
+  const totalEUR = totalJPY * rate + fixedFeeEUR;
+  const lowEUR = (price + shipping + vatLow + lowDuty) * rate + fixedFeeEUR;
+  const highEUR = (price + shipping + vatHigh + highDuty) * rate + fixedFeeEUR;
+
+  $('rPrice').innerHTML = fmtJPY(price) + '<small>' + fmtEUR(price*rate) + '</small>';
+  $('rShip').innerHTML = fmtJPY(shipping) + '<small>' + fmtEUR(shipping*rate) + '</small>';
+  $('rBase').innerHTML = fmtJPY(base) + '<small>' + fmtEUR(base*rate) + '</small>';
+  $('rVatLabel').textContent = 'TVA (' + (settings.vatMin*100).toFixed(0) + '–' + (settings.vatMax*100).toFixed(0) + ' %)';
+  $('rVat').innerHTML = fmtJPY(vatCentral) + '<small>' + fmtEUR(vatCentral*rate) + ' · fourchette ' + fmtEUR(vatLow*rate) + '–' + fmtEUR(vatHigh*rate) + '</small>';
+  $('rDuty').innerHTML = fmtJPY(duty) + '<small>' + fmtEUR(duty*rate) + ' · fourchette ' + fmtEUR(lowDuty*rate) + '–' + fmtEUR(highDuty*rate) + '</small>';
+  $('rFixed').innerHTML = fixedFeeEUR ? fmtEUR(fixedFeeEUR) : '—';
+
+  $('barTotal').innerHTML = fmtEUR(totalEUR) + ' <span class="jpy">(' + fmtJPY(totalJPY) + ')</span>';
+  $('barRange').textContent = 'Min ' + fmtEUR(lowEUR) + '  ·  Max prudent ' + fmtEUR(highEUR);
+}
+
+function renderHistory(){
+  const box = $('histList');
+  if(history.length === 0){
+    box.innerHTML = '<div class="hist-empty">Aucune commande enregistrée.</div>';
+    return;
+  }
+  box.innerHTML = history.slice().reverse().map(o => `
+    <div class="hist-item">
+      <div class="hist-top">
+        <span class="plat">${o.platform === 'whatnot' ? 'Whatnot' : 'CardsInJapan'} · ${o.mode==='first'?'1er achat':'suivant'}</span>
+        <button class="del" data-id="${o.id}">Suppr.</button>
+      </div>
+      <div class="hist-grid">
+        <span>Article</span><b>${fmtJPY(o.price)}</b>
+        <span>Livraison</span><b>${fmtJPY(o.shipping)}</b>
+        <span>TVA</span><b>${fmtJPY(o.vat)}</b>
+        <span>Droits/taxes</span><b>${fmtJPY(o.duty)}</b>
+        <span>Total payé</span><b>${fmtJPY(o.total)}</b>
+        ${o.date ? `<span>Date</span><b>${o.date}</b>` : ''}
+      </div>
+    </div>
+  `).join('');
+  box.querySelectorAll('.del').forEach(btn => {
+    btn.addEventListener('click', () => {
+      history = history.filter(o => o.id !== btn.dataset.id);
+      persist('history', history);
+      renderHistory();
+      renderStats();
+    });
+  });
+}
+
+function renderStats(){
+  const vatPcts = history
+    .filter(o => (o.price + o.shipping) > 0)
+    .map(o => o.vat / (o.price + o.shipping));
+  let vatHtml = '';
+  if(vatPcts.length){
+    const min = Math.min(...vatPcts), max = Math.max(...vatPcts);
+    vatHtml = `<div class="stat-line">TVA observée — <b>${(min*100).toFixed(1)}–${(max*100).toFixed(1)}%</b> (${vatPcts.length} commande${vatPcts.length>1?'s':''})</div>`;
+  }
+
+  const groups = {};
+  history.forEach(o => {
+    const key = o.platform + '_' + o.mode;
+    if(!groups[key]) groups[key] = { pctBase: [], pctPrice: [] };
+    const base = o.price + o.shipping;
+    if(base > 0) groups[key].pctBase.push(o.duty / base);
+    if(o.price > 0) groups[key].pctPrice.push(o.duty / o.price);
+  });
+  const labels = {
+    cardsinjapan_first: 'CardsInJapan · 1er achat (droits / base)',
+    cardsinjapan_next:  'CardsInJapan · achat suivant (droits / prix article)',
+    whatnot_first:      'Whatnot · 1er achat (droits / base)',
+    whatnot_next:       'Whatnot · achat suivant (droits / prix article)'
+  };
+  const modeKey = { cardsinjapan_first:'pctBase', cardsinjapan_next:'pctPrice', whatnot_first:'pctBase', whatnot_next:'pctPrice' };
+  let html = '';
+  Object.keys(labels).forEach(key => {
+    const g = groups[key];
+    const arr = g ? g[modeKey[key]] : [];
+    if(arr && arr.length){
+      const avg = arr.reduce((a,b)=>a+b,0) / arr.length;
+      html += `<div class="stat-line">${labels[key]} — <b>${(avg*100).toFixed(1)}%</b> (${arr.length} commande${arr.length>1?'s':''})</div>`;
+    } else {
+      html += `<div class="stat-line">${labels[key]} — pas encore de donnée</div>`;
+    }
+  });
+  $('statsBox').innerHTML = vatHtml + html;
+}
+
+function fillSettingsForm(){
+  $('setRate').value = settings.rate;
+  $('setVatMin').value = settings.vatMin;
+  $('setVatMax').value = settings.vatMax;
+  $('cijMin').value = settings.platforms.cardsinjapan.firstMin;
+  $('cijMax').value = settings.platforms.cardsinjapan.firstMax;
+  $('cijNextMin').value = settings.platforms.cardsinjapan.nextMin;
+  $('cijNextMax').value = settings.platforms.cardsinjapan.nextMax;
+  $('cijFixed').value = settings.platforms.cardsinjapan.fixedFee;
+  $('wnMin').value = settings.platforms.whatnot.firstMin;
+  $('wnMax').value = settings.platforms.whatnot.firstMax;
+  $('wnNextMin').value = settings.platforms.whatnot.nextMin;
+  $('wnNextMax').value = settings.platforms.whatnot.nextMax;
+  $('wnFixed').value = settings.platforms.whatnot.fixedFee;
+}
+
+function saveSettings(){
+  settings.rate = Number($('setRate').value) || settings.rate;
+  settings.vatMin = Number($('setVatMin').value) || settings.vatMin;
+  settings.vatMax = Number($('setVatMax').value) || settings.vatMax;
+  settings.platforms.cardsinjapan = {
+    firstMin: Number($('cijMin').value) || 0,
+    firstMax: Number($('cijMax').value) || 0,
+    nextMin: Number($('cijNextMin').value) || 0,
+    nextMax: Number($('cijNextMax').value) || 0,
+    fixedFee: Number($('cijFixed').value) || 0
+  };
+  settings.platforms.whatnot = {
+    firstMin: Number($('wnMin').value) || 0,
+    firstMax: Number($('wnMax').value) || 0,
+    nextMin: Number($('wnNextMin').value) || 0,
+    nextMax: Number($('wnNextMax').value) || 0,
+    fixedFee: Number($('wnFixed').value) || 0
+  };
+  persist('settings', settings);
+  calculate();
+  const btn = $('saveSetBtn');
+  const original = btn.textContent;
+  btn.textContent = 'Enregistré ✓';
+  setTimeout(() => btn.textContent = original, 1200);
+}
+
+function addHistoryEntry(){
+  const platform = prompt('Plateforme (cardsinjapan / whatnot)', 'cardsinjapan');
+  if(platform === null) return;
+  const mode = prompt('Mode (first / next)', 'first');
+  if(mode === null) return;
+  const price = Number(prompt('Prix article (JPY)', '0'));
+  const shipping = Number(prompt('Livraison (JPY)', '0'));
+  const vat = Number(prompt('TVA facturée (JPY)', '0'));
+  const duty = Number(prompt('Droits/taxes facturés (JPY)', '0'));
+  const total = Number(prompt('Total payé (JPY)', String(price+shipping+vat+duty)));
+  const date = prompt('Date (optionnel)', '') || '';
+  history.push({
+    id: 'h' + Date.now(),
+    platform: platform.trim() === 'whatnot' ? 'whatnot' : 'cardsinjapan',
+    mode: mode.trim() === 'next' ? 'next' : 'first',
+    price, shipping, vat, duty, total, date
+  });
+  persist('history', history);
+  renderHistory();
+  renderStats();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  $('tabCalc').addEventListener('click', () => setTab('calc'));
+  $('tabHist').addEventListener('click', () => setTab('hist'));
+  $('tabSet').addEventListener('click', () => setTab('set'));
+
+  document.querySelectorAll('#panelCalc input').forEach(i => i.addEventListener('input', calculate));
+  $('saveSetBtn').addEventListener('click', saveSettings);
+  $('addHistBtn').addEventListener('click', addHistoryEntry);
+
+  loadState();
+});
+</script>
+
+</body>
+</html>
